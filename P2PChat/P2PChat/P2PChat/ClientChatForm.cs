@@ -47,11 +47,8 @@ namespace P2PChat
 
         private TcpClient _connectedClient;
         private Form _parentForm;
-
-        // vvv--- 新增變數 ---vvv
         private Image myAvatar;
         private Image remoteAvatar;
-        // ^^^--- 新增變數 ---^^^
 
         public ClientChatForm()
         {
@@ -331,7 +328,7 @@ namespace P2PChat
 
                         string bufferStr = receiveBuffer.ToString();
 
-                        // --- 新增：處理頭像的邏輯 ---
+                        // 處理頭像的邏輯
                         while (bufferStr.Contains("<AVATAR>") && bufferStr.Contains("</AVATAR>"))
                         {
                             int avatarStart = bufferStr.IndexOf("<AVATAR>");
@@ -342,7 +339,7 @@ namespace P2PChat
                                 byte[] avatarBytes = Convert.FromBase64String(base64Avatar);
                                 using (MemoryStream ms = new MemoryStream(avatarBytes))
                                 {
-                                    // 複製一份，避免GDI+泛型錯誤
+                                    // 載入並設定遠端頭像
                                     this.remoteAvatar = new Bitmap(Image.FromStream(ms));
                                 }
 
@@ -355,6 +352,7 @@ namespace P2PChat
                         }
 
                         while (bufferStr.Contains("<IMAGE>") && bufferStr.Contains("</IMAGE>"))
+                        // 處理圖片訊息的邏輯
                         {
                             int imgStart = bufferStr.IndexOf("<IMAGE>");
                             int imgEnd = bufferStr.IndexOf("</IMAGE>");
@@ -362,10 +360,11 @@ namespace P2PChat
                             {
                                 string beforeImg = bufferStr.Substring(0, imgStart);
                                 if (!string.IsNullOrWhiteSpace(beforeImg))
+                                // 在圖片前有文字訊息
                                 {
                                     AppendMessageWithAvatar(remoteAvatar, beforeImg);
                                 }
-
+                                // 提取並處理圖片資料
                                 string imageMessage = bufferStr.Substring(imgStart, imgEnd + 8 - imgStart);
                                 string base64Image = imageMessage.Substring(7, imageMessage.Length - 15);
                                 byte[] imageBytes = Convert.FromBase64String(base64Image);
@@ -382,7 +381,7 @@ namespace P2PChat
                                 }));
 
                                 AppendMessage("對方傳送了圖片", false);
-
+                                // 從緩衝區移除圖片資料
                                 bufferStr = bufferStr.Substring(imgEnd + 8);
                                 receiveBuffer.Clear();
                                 receiveBuffer.Append(bufferStr);
@@ -516,6 +515,7 @@ namespace P2PChat
             flpMessages.ScrollControlIntoView(messagePanel);
         }
         private void AppendMessage(string message, bool clear = false)
+        // 在聊天訊息框中附加系統訊息。如果 clear 參數為 true，則會清空訊息框
         {
             if (flpMessages.InvokeRequired)
             {
